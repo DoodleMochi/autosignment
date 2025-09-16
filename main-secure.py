@@ -1,11 +1,13 @@
 import os
 import requests
+import json
 import operator
 from environs import env, validate, ValidationError
 import hashlib
 import urllib
 import sys
 import time
+import cgi
 
 env.read_env("bingus.env")
 listID = []
@@ -33,7 +35,7 @@ def canvasCompare(classCodes, ucURL, ucAuth):
         print(ucURL)
   #for each class you have, send a request to canvas to get your assignmetns
     for i in classCodes:
-        time.sleep(0.1)
+        #time.sleep(0.1)
         #numClass = numClass + 1
         curl = f"{ucURL}/courses/{i}/assignments"
         #print(str(curl))
@@ -78,18 +80,24 @@ def canvasCompare(classCodes, ucURL, ucAuth):
     return allNames
 
 
-names = canvasCompare(devClassCodes, devURL, devCanvasAuth)
+assignmentNames = canvasCompare(devClassCodes, devURL, devCanvasAuth)
 
 trelloParams = {'key': devApiKey, 'token': devAuthToken, "fields" : "all"}
 
 def getAllCards(boardID, getAllCardsParams):
   allCardsResponse = requests.get(url=f"https://api.trello.com/1/boards/{boardID}/cards", params = getAllCardsParams)
-  return allCardsResponse.json()
+  return allCardsResponse.text
 cardsOnBoard = getAllCards("s9gNcnN6",trelloParams)
 #cardsOnBoard = cardsOnBoard.json()
 cardNames = []
 
-for card in cardsOnBoard.items:
-  if card == "name":
-    cardNames.append(card)
+cardsOnBoard = json.loads(cardsOnBoard)
+for card in cardsOnBoard:
+  if "name" in card:
+    cardNames.append(card["name"])
 print(cardNames)
+for name in cardNames:
+  if name in assignmentNames:
+    print(f"'{name}' is already on the board.")
+  else:
+    print(f"'{name}' is not on the board. Adding it now.")
