@@ -16,11 +16,11 @@ newTaskID = []
 devClassCodes = env.list("CLASS_CODES")
 print(devClassCodes)
 devCanvasAuth = env("CANVAS")
-devApiKey = env("API_KEY")
-devAuthToken = env("AUTH_TOKEN")
+devApiKey = env("TRELLO_API_KEY")
+devAuthToken = env("TRELLO_AUTH_TOKEN")
 devURL = env("URL", validate = validate.URL(relative=False, absolute=True, error="It looks like the URL you provided isn't valid. Check that you've included http:// or https:// in your URL."))
 print(devURL)
-sharedSecret = os.getenv("Secret")
+sharedSecret = os.getenv("TRELLO_API_SECRET")
 cparam = {'include[]': 'submission'}
 allNames = ['']
 
@@ -33,14 +33,14 @@ def canvasCompare(classCodes, ucURL, ucAuth):
         print(ucURL)
   #for each class you have, send a request to canvas to get your assignmetns
     for i in classCodes:
-        time.sleep(1)
+        time.sleep(0.1)
         #numClass = numClass + 1
         curl = f"{ucURL}/courses/{i}/assignments"
-        print(str(curl))
+        #print(str(curl))
         #numParse = 0
         #sends the actual request
         cFullData = requests.get(url=curl, params=cparam, headers=cheader)
-        print(str(cFullData))
+        #print(str(cFullData))
         # currentClass = i
         i = f"{quotes}{i}{quotes}"
         cJson = cFullData.json()
@@ -71,11 +71,25 @@ def canvasCompare(classCodes, ucURL, ucAuth):
                   if done == 'unsubmitted' or done == 'graded':
                     allNames.append(name)
                     allNames.append(done)
-              print(done)
+              #print(done)
             elif item == 'html_url':
               htmlUrl = value
-              print(htmlUrl)
+              #print(htmlUrl)
+    return allNames
 
 
-canvasCompare(devClassCodes, devURL, devCanvasAuth)
+names = canvasCompare(devClassCodes, devURL, devCanvasAuth)
 
+trelloParams = {'key': devApiKey, 'token': devAuthToken, "fields" : "all"}
+
+def getAllCards(boardID, getAllCardsParams):
+  allCardsResponse = requests.get(url=f"https://api.trello.com/1/boards/{boardID}/cards", params = getAllCardsParams)
+  return allCardsResponse.json()
+cardsOnBoard = getAllCards("s9gNcnN6",trelloParams)
+#cardsOnBoard = cardsOnBoard.json()
+cardNames = []
+
+for card in cardsOnBoard.items:
+  if card == "name":
+    cardNames.append(card)
+print(cardNames)
